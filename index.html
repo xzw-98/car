@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>车辆管理系统</title>
+<title>车辆管理</title>
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 * {
@@ -16,53 +16,20 @@ body {
   background: #f5f5f5;
   padding-bottom: 30px;
 }
-/* 头部容器 - 重新布局，避免按钮重叠 */
 .header {
   background: #0066ff;
-  padding: 15px;
+  padding: 15px 12px 10px;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
-/* 功能按钮区 - 顶部右侧 */
-.header-btn-group {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  display: flex;
-  gap: 10px;
-}
-/* 删除按钮 - 红色背景，绝对不遮挡 */
-.del-btn {
-  background: #ff4d4d;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-}
-/* 区域管理按钮 */
-.area-manage-btn {
-  background: #ffffff;
-  color: #0066ff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-}
-/* 搜索区域 - 独立一行，不被遮挡 */
 .search-wrap {
   display: flex;
   align-items: center;
   background: #fff;
   border-radius: 25px;
   padding: 0 15px;
-  height: 46px;
-  width: 100%;
-  margin-top: 40px; /* 给顶部按钮留空间 */
+  height: 48px;
+  margin-bottom: 8px;
+  width: calc(100% - 60px);
 }
 .plate-input {
   flex: 1;
@@ -74,7 +41,7 @@ body {
   padding-right: 10px;
 }
 .area-select {
-  width: 70px;
+  width: 75px;
   border: none;
   outline: none;
   background: transparent;
@@ -84,6 +51,7 @@ body {
   text-align: center;
 }
 .tip-text {
+  width: calc(100% - 90px);
   height: 36px;
   line-height: 36px;
   background: #fff;
@@ -94,7 +62,37 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 8px;
+}
+.del-btn {
+  position: absolute;
+  top: 15px;
+  right: 8px;
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.del-icon {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+.area-manage-btn {
+  position: absolute;
+  right: 8px;
+  top: 72px;
+  background: #fff;
+  color: #0066ff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
 }
 .btn-group {
   background: #0066ff;
@@ -103,10 +101,10 @@ body {
 .btn-row {
   display: flex;
   justify-content: space-around;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .func-btn {
-  width: 60px;
+  width: 65px;
   color: #fff;
   background: transparent;
   border: none;
@@ -123,8 +121,8 @@ body {
   padding: 12px;
 }
 .list-title {
-  font-size: 16px;
-  margin-bottom: 10px;
+  font-size: 17px;
+  margin-bottom: 12px;
   color: #333;
 }
 .car-table {
@@ -168,7 +166,7 @@ body {
 }
 .modal-content {
   background: #fff;
-  width: 85%;
+  width: 88%;
   border-radius: 12px;
   padding: 20px;
 }
@@ -205,18 +203,15 @@ body {
 <body>
 
 <div class="header">
-  <!-- 顶部按钮组：删除 + 区域管理（绝对不遮挡） -->
-  <div class="header-btn-group">
-    <button class="del-btn" onclick="deleteCurrentCar()">删除</button>
-    <button class="area-manage-btn" onclick="openAreaModal()">区域管理</button>
-  </div>
+  <button class="del-btn" onclick="deleteCurrentCar()">
+    <i class="fa-solid fa-trash del-icon"></i>删除
+  </button>
+  <button class="area-manage-btn" onclick="openAreaModal()">区域管理</button>
   
-  <!-- 搜索框：独立一行，和按钮不重叠 -->
   <div class="search-wrap">
     <input class="plate-input" id="plateInput" placeholder="输入车牌" oninput="searchCar()">
     <select class="area-select" id="areaSelect" onchange="saveSelectedArea()"></select>
   </div>
-  
   <div class="tip-text" id="tipText">提示信息</div>
 </div>
 
@@ -274,20 +269,15 @@ body {
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-// 省份简称列表
 const PROVINCE_CODES = ['京','津','沪','渝','冀','晋','辽','吉','黑','苏','浙','皖','闽','赣','鲁','豫','鄂','湘','粤','琼','川','黔','滇','陕','甘','青','台','蒙','桂','藏','宁','新'];
-// 默认区域列表
 const DEFAULT_AREAS = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E'];
-// 当前选中的车辆
 let currentSelectedCar = null;
-// 核心数据（本地存储）
 let carData = {
   cars: [],
   areas: DEFAULT_AREAS,
   selectedArea: '0'
 };
 
-// 初始化本地存储
 function initStorage() {
   const savedData = localStorage.getItem('carManagementData');
   if (savedData) {
@@ -296,20 +286,17 @@ function initStorage() {
   renderAllData();
 }
 
-// 保存所有数据到本地存储
 function saveAllData() {
   localStorage.setItem('carManagementData', JSON.stringify(carData));
   renderAllData();
 }
 
-// 渲染所有数据
 function renderAllData() {
   renderAreaSelect(carData.areas, carData.selectedArea);
   renderCarList(carData.cars);
   renderAreaManageSelect(carData.areas);
 }
 
-// 渲染区域选择框
 function renderAreaSelect(areas, selectedArea) {
   const select = document.getElementById('areaSelect');
   select.innerHTML = '';
@@ -322,7 +309,6 @@ function renderAreaSelect(areas, selectedArea) {
   select.value = selectedArea || areas[0];
 }
 
-// 渲染车辆列表
 function renderCarList(cars) {
   const list = document.getElementById('carList');
   if (cars.length === 0) {
@@ -340,7 +326,6 @@ function renderCarList(cars) {
   list.innerHTML = html;
 }
 
-// 渲染区域管理选择框
 function renderAreaManageSelect(areas) {
   const sel = document.getElementById('areaListSelect');
   sel.innerHTML = '';
@@ -352,7 +337,6 @@ function renderAreaManageSelect(areas) {
   });
 }
 
-// 验证车牌格式
 function validatePlate(plate) {
   plate = plate.trim().toUpperCase();
   if (!plate) return { valid: false, msg: '车牌不能为空' };
@@ -361,7 +345,6 @@ function validatePlate(plate) {
   return { valid: true };
 }
 
-// 搜索车辆
 function searchCar() {
   const input = document.getElementById('plateInput').value.trim().toUpperCase();
   const tip = document.getElementById('tipText');
@@ -371,13 +354,11 @@ function searchCar() {
   else { tip.innerHTML = `<span class="success-tip">找到：${car.plate}　区域：${car.area}</span>`; currentSelectedCar = car; }
 }
 
-// 保存选中的区域
 function saveSelectedArea() {
   carData.selectedArea = document.getElementById('areaSelect').value;
   saveAllData();
 }
 
-// 新增车辆
 function addNewCar() {
   const plate = document.getElementById('plateInput').value.trim().toUpperCase();
   const v = validatePlate(plate);
@@ -393,7 +374,6 @@ function addNewCar() {
   alert('新增成功');
 }
 
-// 修改车辆区域
 function updateCarArea() {
   if (!currentSelectedCar) { alert('请先搜索车辆'); return; }
   const area = document.getElementById('areaSelect').value;
@@ -403,94 +383,84 @@ function updateCarArea() {
   searchCar();
 }
 
-// 删除当前选中车辆
 function deleteCurrentCar() {
-  if (!currentSelectedCar) { alert('请先搜索车辆！'); return; }
-  if (!confirm('确定删除该车辆吗？')) return;
+  if (!currentSelectedCar) { alert('请先搜索'); return; }
+  if (!confirm('确定删除？')) return;
   carData.cars = carData.cars.filter(c => c.plate !== currentSelectedCar.plate);
   saveAllData();
   document.getElementById('plateInput').value = '';
   currentSelectedCar = null;
-  alert('删除成功！');
+  alert('删除成功');
 }
 
-// 清空所有车辆
 function clearAllCars() {
-  if (!confirm('确定清空所有车辆数据吗？')) return;
+  if (!confirm('确定清空所有？')) return;
   carData.cars = [];
   saveAllData();
   document.getElementById('plateInput').value = '';
   currentSelectedCar = null;
-  alert('已清空所有数据！');
+  alert('已清空');
 }
 
-// 打开修改车牌弹窗
 function openEditPlateModal() {
-  if (!currentSelectedCar) { alert('请先搜索车辆！'); return; }
+  if (!currentSelectedCar) { alert('请先搜索'); return; }
   document.getElementById('newPlateInput').value = currentSelectedCar.plate;
   document.getElementById('editPlateModal').style.display = 'flex';
 }
-// 关闭修改车牌弹窗
 function closeEditPlateModal() { document.getElementById('editPlateModal').style.display = 'none'; }
-// 保存修改后的车牌
 function saveEditedPlate() {
   const newPlate = document.getElementById('newPlateInput').value.trim().toUpperCase();
   const v = validatePlate(newPlate);
   if (!v.valid) { alert(v.msg); return; }
   if (carData.cars.some(c => c.plate === newPlate && c.plate !== currentSelectedCar.plate)) {
-    alert('该车牌已存在！'); return;
+    alert('已存在'); return;
   }
   carData.cars = carData.cars.map(c => c.plate === currentSelectedCar.plate ? {...c, plate: newPlate} : c);
   saveAllData();
   currentSelectedCar.plate = newPlate;
   closeEditPlateModal();
   searchCar();
-  alert('车牌修改成功！');
+  alert('修改成功');
 }
 
-// 打开区域管理弹窗
 function openAreaModal() { document.getElementById('areaManageModal').style.display = 'flex'; }
-// 关闭区域管理弹窗
 function closeAreaModal() {
-  document.getElementById('areaNameInput').value = '';
   document.getElementById('areaManageModal').style.display = 'none';
+  document.getElementById('areaNameInput').value = '';
 }
-// 新增区域
 function addNewArea() {
   const name = document.getElementById('areaNameInput').value.trim();
-  if (!name) { alert('请输入区域名称！'); return; }
-  if (carData.areas.includes(name)) { alert('该区域已存在！'); return; }
+  if (!name) { alert('请输入名称'); return; }
+  if (carData.areas.includes(name)) { alert('已存在'); return; }
   carData.areas.push(name);
   saveAllData();
   document.getElementById('areaNameInput').value = '';
-  alert('区域添加成功！');
+  alert('添加成功');
 }
-// 修改区域名称
 function renameArea() {
   const old = document.getElementById('areaListSelect').value;
   const name = document.getElementById('areaNameInput').value.trim();
-  if (!name) { alert('请输入新区域名称！'); return; }
-  if (carData.areas.includes(name)) { alert('该区域名称已存在！'); return; }
+  if (!name) { alert('请输入新名称'); return; }
+  if (carData.areas.includes(name)) { alert('已存在'); return; }
   carData.areas = carData.areas.map(a => a === old ? name : a);
   carData.cars = carData.cars.map(c => c.area === old ? {...c, area: name} : c);
   if (carData.selectedArea === old) carData.selectedArea = name;
   saveAllData();
-  alert('区域名称修改成功！');
+  alert('修改成功');
 }
-// 删除区域
 function deleteArea() {
   const name = document.getElementById('areaListSelect').value;
-  if (carData.areas.length <= 1) { alert('至少保留一个区域！'); return; }
-  if (!confirm('确定删除该区域吗？')) return;
+  if (carData.areas.length <= 1) { alert('至少保留一个'); return; }
+  if (!confirm('确定删除？')) return;
   const first = carData.areas[0];
   carData.areas = carData.areas.filter(a => a !== name);
   carData.cars = carData.cars.map(c => c.area === name ? {...c, area: first} : c);
   if (carData.selectedArea === name) carData.selectedArea = first;
   saveAllData();
-  alert('区域删除成功！');
+  alert('删除成功');
 }
 
-// 导入Excel数据
+// ===================== 最终修复：严格按Excel区域导入 =====================
 function importExcelData(fileInput) {
   const file = fileInput.files[0];
   if (!file) return;
@@ -512,13 +482,14 @@ function importExcelData(fileInput) {
         if (carData.cars.some(c => c.plate === plate)) { skip++; return; }
 
         const finalArea = area || defaultArea;
+
         carData.cars.push({ plate, area: finalArea, time });
         add++;
       });
       saveAllData();
-      alert(`导入完成！\n成功导入：${add} 辆\n跳过：${skip} 辆`);
+      alert(`导入完成\n成功：${add} 辆\n跳过：${skip} 辆`);
     } catch (e) {
-      alert('导入失败！请检查Excel文件格式是否正确');
+      alert('导入失败：文件格式错误');
       console.error(e);
     }
     fileInput.value = '';
@@ -526,9 +497,8 @@ function importExcelData(fileInput) {
   reader.readAsArrayBuffer(file);
 }
 
-// 导出Excel数据
 function exportCarData() {
-  if (carData.cars.length === 0) { alert('暂无车辆数据可导出！'); return; }
+  if (carData.cars.length === 0) { alert('无数据'); return; }
   const arr = carData.cars.map(c => ({ 车牌:c.plate, 区域:c.area, 入库时间:c.time }));
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(arr);
@@ -536,7 +506,6 @@ function exportCarData() {
   XLSX.writeFile(wb, '车辆数据.xlsx');
 }
 
-// 页面加载完成后初始化
 window.onload = initStorage;
 </script>
 </body>
