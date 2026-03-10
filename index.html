@@ -62,10 +62,11 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* 核心修改：调整删除按钮位置，避开搜索框 */
 .del-btn {
   position: absolute;
   top: 12px;
-  right: 12px;
+  right: 80px; /* 从12px改成80px，解决重叠 */
   width: 46px;
   height: 46px;
   background: transparent;
@@ -268,15 +269,20 @@ body {
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
+// 省份简称列表
 const PROVINCE_CODES = ['京','津','沪','渝','冀','晋','辽','吉','黑','苏','浙','皖','闽','赣','鲁','豫','鄂','湘','粤','琼','川','黔','滇','陕','甘','青','台','蒙','桂','藏','宁','新'];
+// 默认区域列表
 const DEFAULT_AREAS = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E'];
+// 当前选中的车辆
 let currentSelectedCar = null;
+// 核心数据（本地存储）
 let carData = {
   cars: [],
   areas: DEFAULT_AREAS,
   selectedArea: '0'
 };
 
+// 初始化本地存储
 function initStorage() {
   const savedData = localStorage.getItem('carManagementData');
   if (savedData) {
@@ -285,17 +291,20 @@ function initStorage() {
   renderAllData();
 }
 
+// 保存所有数据到本地存储
 function saveAllData() {
   localStorage.setItem('carManagementData', JSON.stringify(carData));
   renderAllData();
 }
 
+// 渲染所有数据
 function renderAllData() {
   renderAreaSelect(carData.areas, carData.selectedArea);
   renderCarList(carData.cars);
   renderAreaManageSelect(carData.areas);
 }
 
+// 渲染区域选择框
 function renderAreaSelect(areas, selectedArea) {
   const select = document.getElementById('areaSelect');
   select.innerHTML = '';
@@ -308,6 +317,7 @@ function renderAreaSelect(areas, selectedArea) {
   select.value = selectedArea || areas[0];
 }
 
+// 渲染车辆列表
 function renderCarList(cars) {
   const list = document.getElementById('carList');
   if (cars.length === 0) {
@@ -325,6 +335,7 @@ function renderCarList(cars) {
   list.innerHTML = html;
 }
 
+// 渲染区域管理选择框
 function renderAreaManageSelect(areas) {
   const sel = document.getElementById('areaListSelect');
   sel.innerHTML = '';
@@ -336,6 +347,7 @@ function renderAreaManageSelect(areas) {
   });
 }
 
+// 验证车牌格式
 function validatePlate(plate) {
   plate = plate.trim().toUpperCase();
   if (!plate) return { valid: false, msg: '车牌不能为空' };
@@ -344,6 +356,7 @@ function validatePlate(plate) {
   return { valid: true };
 }
 
+// 搜索车辆
 function searchCar() {
   const input = document.getElementById('plateInput').value.trim().toUpperCase();
   const tip = document.getElementById('tipText');
@@ -353,11 +366,13 @@ function searchCar() {
   else { tip.innerHTML = `<span class="success-tip">找到：${car.plate}　区域：${car.area}</span>`; currentSelectedCar = car; }
 }
 
+// 保存选中的区域
 function saveSelectedArea() {
   carData.selectedArea = document.getElementById('areaSelect').value;
   saveAllData();
 }
 
+// 新增车辆
 function addNewCar() {
   const plate = document.getElementById('plateInput').value.trim().toUpperCase();
   const v = validatePlate(plate);
@@ -373,6 +388,7 @@ function addNewCar() {
   alert('新增成功');
 }
 
+// 修改车辆区域
 function updateCarArea() {
   if (!currentSelectedCar) { alert('请先搜索车辆'); return; }
   const area = document.getElementById('areaSelect').value;
@@ -382,6 +398,7 @@ function updateCarArea() {
   searchCar();
 }
 
+// 删除当前选中车辆
 function deleteCurrentCar() {
   if (!currentSelectedCar) { alert('请先搜索'); return; }
   if (!confirm('确定删除？')) return;
@@ -392,6 +409,7 @@ function deleteCurrentCar() {
   alert('删除成功');
 }
 
+// 清空所有车辆
 function clearAllCars() {
   if (!confirm('确定清空所有？')) return;
   carData.cars = [];
@@ -401,12 +419,15 @@ function clearAllCars() {
   alert('已清空');
 }
 
+// 打开修改车牌弹窗
 function openEditPlateModal() {
   if (!currentSelectedCar) { alert('请先搜索'); return; }
   document.getElementById('newPlateInput').value = currentSelectedCar.plate;
   document.getElementById('editPlateModal').style.display = 'flex';
 }
+// 关闭修改车牌弹窗
 function closeEditPlateModal() { document.getElementById('editPlateModal').style.display = 'none'; }
+// 保存修改后的车牌
 function saveEditedPlate() {
   const newPlate = document.getElementById('newPlateInput').value.trim().toUpperCase();
   const v = validatePlate(newPlate);
@@ -422,11 +443,14 @@ function saveEditedPlate() {
   alert('修改成功');
 }
 
+// 打开区域管理弹窗
 function openAreaModal() { document.getElementById('areaManageModal').style.display = 'flex'; }
+// 关闭区域管理弹窗
 function closeAreaModal() {
   document.getElementById('areaNameInput').value = '';
   document.getElementById('areaManageModal').style.display = 'none';
 }
+// 新增区域
 function addNewArea() {
   const name = document.getElementById('areaNameInput').value.trim();
   if (!name) { alert('请输入名称'); return; }
@@ -436,6 +460,7 @@ function addNewArea() {
   document.getElementById('areaNameInput').value = '';
   alert('添加成功');
 }
+// 修改区域名称
 function renameArea() {
   const old = document.getElementById('areaListSelect').value;
   const name = document.getElementById('areaNameInput').value.trim();
@@ -447,6 +472,7 @@ function renameArea() {
   saveAllData();
   alert('修改成功');
 }
+// 删除区域
 function deleteArea() {
   const name = document.getElementById('areaListSelect').value;
   if (carData.areas.length <= 1) { alert('至少保留一个'); return; }
@@ -459,6 +485,7 @@ function deleteArea() {
   alert('删除成功');
 }
 
+// 导入Excel数据
 function importExcelData(fileInput) {
   const file = fileInput.files[0];
   if (!file) return;
@@ -495,6 +522,7 @@ function importExcelData(fileInput) {
   reader.readAsArrayBuffer(file);
 }
 
+// 导出Excel数据
 function exportCarData() {
   if (carData.cars.length === 0) { alert('无数据'); return; }
   const arr = carData.cars.map(c => ({ 车牌:c.plate, 区域:c.area, 入库时间:c.time }));
@@ -504,6 +532,7 @@ function exportCarData() {
   XLSX.writeFile(wb, '车辆数据.xlsx');
 }
 
+// 页面加载完成后初始化
 window.onload = initStorage;
 </script>
 </body>
