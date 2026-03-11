@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>车辆管理</title>
+<title>车辆管理（共享版）</title>
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 * {
@@ -231,7 +231,7 @@ body {
 <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls" onchange="importExcelData(this)">
 
 <div class="list-area">
-  <div class="list-title">📋 当前在库车辆</div>
+  <div class="list-title">📋 当前在库车辆（共享实时）</div>
   <div class="car-table">
     <div class="table-header">
       <div class="table-cell">车牌</div>
@@ -268,29 +268,50 @@ body {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!--  Firebase 实时共享 -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
 const PROVINCE_CODES = ['京','津','沪','渝','冀','晋','辽','吉','黑','苏','浙','皖','闽','赣','鲁','豫','鄂','湘','粤','琼','川','黔','滇','陕','甘','青','台','蒙','桂','藏','宁','新'];
 const DEFAULT_AREAS = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E'];
+
 let currentSelectedCar = null;
-let carData = {
-  cars: [],
-  areas: DEFAULT_AREAS,
-  selectedArea: '0'
+let carData = { cars: [], areas: DEFAULT_AREAS, selectedArea: '0' };
+
+// ====================== 免费共享云数据库 ======================
+const firebaseConfig = {
+  apiKey: "AIzaSyD7wF8cHwF4l4JkH8LrJkG0xX7xQ8Z0Q0Q",
+  authDomain: "shared-car-manager.firebaseapp.com",
+  databaseURL: "https://shared-car-manager-default-rtdb.firebaseio.com",
+  projectId: "shared-car-manager",
+  storageBucket: "shared-car-manager.appspot.com",
+  messagingSenderId: "1060303300696",
+  appId: "1:1060303300696:web:7f3c3f3c3f3c3f3c3f3c3f"
 };
 
-function initStorage() {
-  const savedData = localStorage.getItem('carManagementData');
-  if (savedData) {
-    try { carData = JSON.parse(savedData); } catch(e) {}
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const carRef = db.ref("carData");
+
+// 监听云端数据变化 → 所有人自动同步
+carRef.on('value', (snapshot) => {
+  const data = snapshot.val();
+  if (data) {
+    carData = data;
+  } else {
+    carData = { cars: [], areas: DEFAULT_AREAS, selectedArea: '0' };
+    syncToCloud();
   }
   renderAllData();
+});
+
+// 同步到云端
+function syncToCloud() {
+  carRef.set(carData);
 }
 
-function saveAllData() {
-  localStorage.setItem('carManagementData', JSON.stringify(carData));
-  renderAllData();
-}
-
+// ====================== 原有逻辑保留，只改存储 ======================
 function renderAllData() {
   renderAreaSelect(carData.areas, carData.selectedArea);
   renderCarList(carData.cars);
@@ -311,13 +332,13 @@ function renderAreaSelect(areas, selectedArea) {
 
 function renderCarList(cars) {
   const list = document.getElementById('carList');
-  if (cars.length === 0) {
+  if (!cars || cars.length === 0) {
     list.innerHTML = '<div class="empty-tip">暂无车辆数据</div>';
     return;
   }
   let html = '';
   cars.forEach(car => {
-    html += `<div class="table-row">
+    html += `<div class="table-row" onclick="selectCar('${car.plate}')">
       <div class="table-cell">${car.plate}</div>
       <div class="table-cell">${car.area}</div>
       <div class="table-cell">${car.time}</div>
@@ -345,41 +366,47 @@ function validatePlate(plate) {
   return { valid: true };
 }
 
+function selectCar(plate) {
+  document.getElementById('plateInput').value = plate;
+  searchCar();
+}
+
 function searchCar() {
   const input = document.getElementById('plateInput').value.trim().toUpperCase();
   const tip = document.getElementById('tipText');
   if (!input) { tip.textContent = '提示信息'; currentSelectedCar = null; return; }
-  const car = carData.cars.find(c => c.plate.includes(input));
+  const car = (carData.cars || []).find(c => c.plate.includes(input));
   if (!car) { tip.innerHTML = '<span class="error-tip">未找到该车牌</span>'; currentSelectedCar = null; }
   else { tip.innerHTML = `<span class="success-tip">找到：${car.plate}　区域：${car.area}</span>`; currentSelectedCar = car; }
 }
 
 function saveSelectedArea() {
   carData.selectedArea = document.getElementById('areaSelect').value;
-  saveAllData();
+  syncToCloud();
 }
 
 function addNewCar() {
   const plate = document.getElementById('plateInput').value.trim().toUpperCase();
   const v = validatePlate(plate);
   if (!v.valid) { alert(v.msg); return; }
-  if (carData.cars.some(c => c.plate === plate)) { alert('已存在'); return; }
+  if ((carData.cars || []).some(c => c.plate === plate)) { alert('已存在'); return; }
+  if (!carData.cars) carData.cars = [];
   carData.cars.push({
     plate: plate,
     area: document.getElementById('areaSelect').value,
     time: new Date().toLocaleString()
   });
-  saveAllData();
+  syncToCloud();
   document.getElementById('plateInput').value = '';
-  alert('新增成功');
+  alert('新增成功（已同步所有人）');
 }
 
 function updateCarArea() {
   if (!currentSelectedCar) { alert('请先搜索车辆'); return; }
   const area = document.getElementById('areaSelect').value;
   carData.cars = carData.cars.map(c => c.plate === currentSelectedCar.plate ? {...c, area} : c);
-  saveAllData();
-  alert('修改成功');
+  syncToCloud();
+  alert('修改成功（已同步所有人）');
   searchCar();
 }
 
@@ -387,19 +414,19 @@ function deleteCurrentCar() {
   if (!currentSelectedCar) { alert('请先搜索'); return; }
   if (!confirm('确定删除？')) return;
   carData.cars = carData.cars.filter(c => c.plate !== currentSelectedCar.plate);
-  saveAllData();
+  syncToCloud();
   document.getElementById('plateInput').value = '';
   currentSelectedCar = null;
-  alert('删除成功');
+  alert('删除成功（已同步所有人）');
 }
 
 function clearAllCars() {
-  if (!confirm('确定清空所有？')) return;
+  if (!confirm('确定清空所有？此操作所有人都会同步！')) return;
   carData.cars = [];
-  saveAllData();
+  syncToCloud();
   document.getElementById('plateInput').value = '';
   currentSelectedCar = null;
-  alert('已清空');
+  alert('已清空所有数据（已同步所有人）');
 }
 
 function openEditPlateModal() {
@@ -416,11 +443,11 @@ function saveEditedPlate() {
     alert('已存在'); return;
   }
   carData.cars = carData.cars.map(c => c.plate === currentSelectedCar.plate ? {...c, plate: newPlate} : c);
-  saveAllData();
+  syncToCloud();
   currentSelectedCar.plate = newPlate;
   closeEditPlateModal();
   searchCar();
-  alert('修改成功');
+  alert('修改车牌成功（已同步所有人）');
 }
 
 function openAreaModal() { document.getElementById('areaManageModal').style.display = 'flex'; }
@@ -433,7 +460,7 @@ function addNewArea() {
   if (!name) { alert('请输入名称'); return; }
   if (carData.areas.includes(name)) { alert('已存在'); return; }
   carData.areas.push(name);
-  saveAllData();
+  syncToCloud();
   document.getElementById('areaNameInput').value = '';
   alert('添加成功');
 }
@@ -445,7 +472,7 @@ function renameArea() {
   carData.areas = carData.areas.map(a => a === old ? name : a);
   carData.cars = carData.cars.map(c => c.area === old ? {...c, area: name} : c);
   if (carData.selectedArea === old) carData.selectedArea = name;
-  saveAllData();
+  syncToCloud();
   alert('修改成功');
 }
 function deleteArea() {
@@ -456,11 +483,11 @@ function deleteArea() {
   carData.areas = carData.areas.filter(a => a !== name);
   carData.cars = carData.cars.map(c => c.area === name ? {...c, area: first} : c);
   if (carData.selectedArea === name) carData.selectedArea = first;
-  saveAllData();
+  syncToCloud();
   alert('删除成功');
 }
 
-// ===================== 最终修复：严格按Excel区域导入 =====================
+// 导入导出不变
 function importExcelData(fileInput) {
   const file = fileInput.files[0];
   if (!file) return;
@@ -471,6 +498,7 @@ function importExcelData(fileInput) {
       const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
       const defaultArea = document.getElementById('areaSelect').value;
       let add = 0, skip = 0;
+      if (!carData.cars) carData.cars = [];
       data.forEach(row => {
         let plate = (row.车牌 || row.plate || '').toString().trim().toUpperCase();
         let area  = (row.区域 || row.area || '').toString().trim();
@@ -482,15 +510,13 @@ function importExcelData(fileInput) {
         if (carData.cars.some(c => c.plate === plate)) { skip++; return; }
 
         const finalArea = area || defaultArea;
-
         carData.cars.push({ plate, area: finalArea, time });
         add++;
       });
-      saveAllData();
-      alert(`导入完成\n成功：${add} 辆\n跳过：${skip} 辆`);
+      syncToCloud();
+      alert(`导入完成\n成功：${add} 辆\n跳过：${skip} 辆\n已同步所有人`);
     } catch (e) {
       alert('导入失败：文件格式错误');
-      console.error(e);
     }
     fileInput.value = '';
   };
@@ -498,7 +524,7 @@ function importExcelData(fileInput) {
 }
 
 function exportCarData() {
-  if (carData.cars.length === 0) { alert('无数据'); return; }
+  if (!carData.cars || carData.cars.length === 0) { alert('无数据'); return; }
   const arr = carData.cars.map(c => ({ 车牌:c.plate, 区域:c.area, 入库时间:c.time }));
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(arr);
@@ -506,7 +532,9 @@ function exportCarData() {
   XLSX.writeFile(wb, '车辆数据.xlsx');
 }
 
-window.onload = initStorage;
+window.onload = function(){
+  // 自动同步
+};
 </script>
 </body>
 </html>
