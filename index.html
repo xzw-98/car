@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>车辆管理 · 更新版</title>
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- 添加Supabase SDK -->
-
+<!-- 添加Supabase SDK - 就是这一行！ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
+// 你的代码...
 // ==================== 配置Supabase（请替换成你的密钥）====================
 const SUPABASE_URL = 'https://colbburjnntylthiczfi.supabase.co';  // 替换成你的Project URL
 const SUPABASE_KEY = 'sb_publishable_AZfzismT2c5f4cIeRjpPmA_elK7_IqJ';           // 替换成你的publishable key
