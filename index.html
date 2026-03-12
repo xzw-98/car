@@ -3,16 +3,293 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>车辆管理 · 更新版</title>
+<title>车辆管理 · 在线版</title>
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- 添加Supabase SDK - 就是这一行！ -->
+<!-- 添加Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: "Microsoft YaHei", sans-serif;
+  background: #f5f5f5;
+  padding-bottom: 30px;
+}
+.header {
+  background: #0066ff;
+  padding: 15px 12px 10px;
+  position: relative;
+}
+.search-wrap {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 25px;
+  padding: 0 15px;
+  height: 48px;
+  margin-bottom: 8px;
+  width: calc(100% - 60px);
+}
+.plate-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  background: transparent;
+  border-right: 1px solid #eee;
+  padding-right: 10px;
+}
+.area-select {
+  width: 75px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  color: #0066ff;
+  font-weight: bold;
+  text-align: center;
+}
+.tip-text {
+  width: calc(100% - 90px);
+  height: 36px;
+  line-height: 36px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.del-btn {
+  position: absolute;
+  top: 15px;
+  right: 8px;
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.del-icon {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+.area-manage-btn {
+  position: absolute;
+  right: 8px;
+  top: 72px;
+  background: #fff;
+  color: #0066ff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+}
+.btn-group {
+  background: #0066ff;
+  padding: 10px 12px 15px;
+}
+.btn-row {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 12px;
+}
+.func-btn {
+  width: 65px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 12px;
+}
+.btn-icon {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+.list-area {
+  padding: 12px;
+}
+.list-title {
+  font-size: 17px;
+  margin-bottom: 12px;
+  color: #333;
+}
+.car-table {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.table-header {
+  display: flex;
+  background: #f8f9fa;
+  padding: 12px 0;
+  font-size: 14px;
+  color: #666;
+}
+.table-row {
+  display: flex;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+.table-cell {
+  flex: 1;
+  text-align: center;
+}
+.empty-tip {
+  text-align: center;
+  padding: 30px 0;
+  color: #999;
+}
+.success-tip { color: #00b42a; font-weight: bold; }
+.error-tip { color: #ff4d4f; }
+.file-input { display: none; }
+.modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal-content {
+  background: #fff;
+  width: 88%;
+  border-radius: 12px;
+  padding: 20px;
+}
+.modal-title {
+  text-align: center;
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+.modal-input, .modal-select {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0 12px;
+  margin-bottom: 15px;
+  font-size: 15px;
+}
+.modal-btn-wrap {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.modal-btn {
+  flex: 1;
+  min-width: 70px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.confirm-btn { background: #0066ff; color: #fff; }
+.cancel-btn { background: #eee; color: #666; }
+.add-btn { background: #00b42a; color: #fff; }
+.sync-tip {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  z-index: 1000;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <button class="del-btn" onclick="deleteCurrentCar()">
+    <i class="fa-solid fa-trash del-icon"></i>删除
+  </button>
+  <button class="area-manage-btn" onclick="openAreaModal()">区域管理</button>
+  
+  <div class="search-wrap">
+    <input class="plate-input" id="plateInput" placeholder="输入车牌" oninput="searchCar()">
+    <select class="area-select" id="areaSelect" onchange="saveSelectedArea()"></select>
+  </div>
+  <div class="tip-text" id="tipText">提示信息</div>
+</div>
+
+<div class="btn-group">
+  <div class="btn-row">
+    <button class="func-btn" onclick="addNewCar()"><i class="fa-solid fa-plus btn-icon"></i>新增车辆</button>
+    <button class="func-btn" onclick="updateCarArea()"><i class="fa-solid fa-map-pin btn-icon"></i>修改区域</button>
+    <button class="func-btn" onclick="openEditPlateModal()"><i class="fa-solid fa-pen-to-square btn-icon"></i>修改车牌</button>
+  </div>
+  <div class="btn-row">
+    <button class="func-btn" onclick="document.getElementById('excelFile').click()"><i class="fa-solid fa-file-import btn-icon"></i>批量导入</button>
+    <button class="func-btn" onclick="exportCarData()"><i class="fa-solid fa-file-export btn-icon"></i>导出数据</button>
+    <button class="func-btn" onclick="clearAllCars()"><i class="fa-solid fa-broom btn-icon"></i>清空全部</button>
+  </div>
+</div>
+
+<input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls" onchange="importExcelData(this)">
+
+<div class="list-area">
+  <div class="list-title">📋 当前在库车辆</div>
+  <div class="car-table">
+    <div class="table-header">
+      <div class="table-cell">车牌</div>
+      <div class="table-cell">区域</div>
+      <div class="table-cell">入库时间</div>
+    </div>
+    <div id="carList"></div>
+  </div>
+</div>
+
+<div class="modal" id="editPlateModal">
+  <div class="modal-content">
+    <div class="modal-title">修改车牌</div>
+    <input class="modal-input" id="newPlateInput" placeholder="输入新车牌">
+    <div class="modal-btn-wrap">
+      <button class="modal-btn confirm-btn" onclick="saveEditedPlate()">确定</button>
+      <button class="modal-btn cancel-btn" onclick="closeEditPlateModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="areaManageModal">
+  <div class="modal-content">
+    <div class="modal-title">区域管理</div>
+    <select class="modal-select" id="areaListSelect"></select>
+    <input class="modal-input" id="areaNameInput" placeholder="输入区域名称">
+    <div class="modal-btn-wrap">
+      <button class="modal-btn add-btn" onclick="addNewArea()">新增</button>
+      <button class="modal-btn confirm-btn" onclick="renameArea()">修改</button>
+      <button class="modal-btn confirm-btn" onclick="deleteArea()">删除</button>
+      <button class="modal-btn cancel-btn" onclick="closeAreaModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="sync-tip" id="syncTip">⚡ 实时同步中</div>
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-// 你的代码...
 // ==================== 配置Supabase（请替换成你的密钥）====================
-const SUPABASE_URL = 'https://colbburjnntylthiczfi.supabase.co';  // 替换成你的Project URL
-const SUPABASE_KEY = 'sb_publishable_AZfzismT2c5f4cIeRjpPmA_elK7_IqJ';           // 替换成你的publishable key
+const SUPABASE_URL = 'https://colbburjnntylthiczfi.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_AZfzismT2c5f4cIeRjpPmA_elK7_IqJ';
 
 // 检查SDK是否加载成功
 if (typeof supabase === 'undefined') {
@@ -21,7 +298,7 @@ if (typeof supabase === 'undefined') {
     console.log('Supabase SDK加载成功');
 }
 
-// 初始化Supabase客户端（修正变量名冲突）
+// 初始化Supabase客户端
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ==================== 全局变量 ====================
@@ -533,3 +810,5 @@ function exportCarData() {
 // 启动应用
 window.onload = initStorage;
 </script>
+</body>
+</html>
