@@ -289,9 +289,10 @@ body {
 <script>
 // ==================== 配置Supabase（请替换成你的密钥）====================
 const SUPABASE_URL = 'https://colbburjnntylthiczfi.supabase.co';  // 替换成你的Project URL
-const SUPABASE_KEY = 'sb_publishable_AZfzismT2c5f4cIeRjpPmA_elK7_IqJ';           // 替换成你的anon key
+const SUPABASE_KEY = 'sb_publishable_AZfzismT2c5f4cIeRjpPmA_elK7_IqJ';           // 替换成你的publishable key
 
-const supabase = supabaseCreateClient(SUPABASE_URL, SUPABASE_KEY);
+// 修正这一行！去掉 'Create'
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ==================== 全局变量 ====================
 const PROVINCE_CODES = ['京','津','沪','渝','冀','晋','辽','吉','黑','苏','浙','皖','闽','赣','鲁','豫','鄂','湘','粤','琼','川','黔','滇','陕','甘','青','台','蒙','桂','藏','宁','新'];
